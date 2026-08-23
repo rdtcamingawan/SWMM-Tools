@@ -16,12 +16,14 @@ class SWMMTools:
         # Add to the Plugins menu
         self.iface.addPluginToMenu("&SWMM Tools", self.action_config)
 
+        self.iface.addToolBarIcon(self.action_config)
 
-        # Trying to add function to toolbar
     def unload(self):
         # Remove the menu item when pllugin is disabled
         if self.action_config:
             self.iface.removePluginMenu("&SWMM Tools", self.action_config)
+            self.iface.removeToolBarIcon(self.action_config)
+            
     def run_config(self):
         from .config_dialog import ConfigDialog
 
