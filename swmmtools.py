@@ -15,6 +15,9 @@ class SWMMTools:
         self.action_config.triggered.connect(self.run_config)
         # Add to the Plugins menu
         self.iface.addPluginToMenu("&SWMM Tools", self.action_config)
+
+
+        # Trying to add function to toolbar
     def unload(self):
         # Remove the menu item when pllugin is disabled
         if self.action_config:
@@ -31,6 +34,15 @@ class SWMMTools:
         # User clicked OK. Read layers
         layers = dialog.get_selected_layers()
 
+        # Save the layers
+        from .config import save_layers
+        save_layers(
+            subcatchment=layers["subcatchment"],
+            junction=layers["junction"],
+            outfall=layers["outfall"]
+        )
+
+        # Code block for push message (debugging)
         subcatchment = layers["subcatchment"]
         junction = layers["junction"]
         outfall = layers["outfall"]
@@ -44,4 +56,9 @@ class SWMMTools:
         self.iface.messageBar().pushSuccess(
             "SWMM Tools",
             " | ".join(msg)
+        )
+
+        self.iface.messageBar().pushMessage(
+            "SWMM Tools",
+            "Layer configuration saved for this project."
         )

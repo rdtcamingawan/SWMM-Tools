@@ -5,6 +5,8 @@ from qgis.PyQt.QtCore import Qt
 from qgis.gui import QgsMapLayerComboBox
 from qgis.core import QgsMapLayerProxyModel
 
+from .config import save_layers, load_layer
+
 class ConfigDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -52,6 +54,12 @@ class ConfigDialog(QDialog):
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+        # Pre-select previously selected layers
+        self.cmb_sub.setLayer(load_layer("subcatchment_layer_id", "subcatchment_layer"))
+        self.cmb_junction.setLayer(load_layer("junction_layer_id", "junction_layer"))
+        self.cmb_outfall.setLayer(load_layer("outfall_layer_id", "outfall_layer"))
+
 
     def get_selected_layers(self):
         """Returns the layer the user chooses"""
