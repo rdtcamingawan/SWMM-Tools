@@ -3,8 +3,6 @@ from qgis.PyQt.QtGui import QColor
 from qgis.core import (QgsWkbTypes, QgsGeometry, QgsFeatureRequest)
 from qgis.gui import QgsMapTool, QgsRubberBand
 
-from qgis.core import QgsMapTool
-
 from .config import load_layer
 
 OUTLET_FIELD = "Outlet"
@@ -33,7 +31,7 @@ class AssignOutletMapTool(QgsMapTool):
 
     def load_layers(self):
         self.sub_layer = load_layer("subcatchment_layer_id", "subcatchment_layer")
-        junction = load_layer("junction_layer_id", "juntion_layer")
+        junction = load_layer("junction_layer_id", "junction_layer")
         outfall = load_layer("outfall_layer_id", "outfall_layer")
 
         bar = self.plugin.iface.messageBar()
