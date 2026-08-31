@@ -5,7 +5,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.gui import QgsMapLayerComboBox
 from qgis.core import QgsMapLayerProxyModel
 
-from .config import save_layers, load_layer
+from .config import load_layer
 
 class ConfigDialog(QDialog):
     def __init__(self, parent=None):
