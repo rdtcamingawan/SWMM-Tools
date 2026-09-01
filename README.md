@@ -5,7 +5,7 @@
 SWMM Tools stores which layers are your subcatchments, junctions and outfalls, then lets you click a subcatchment and a node to write the node's `Name` into the subcatchment `Outlet` field. It is meant to sit beside **Generate SWMM Inp**. It does not write an EPA SWMM `.inp` file.
 
 ![QGIS](https://img.shields.io/badge/QGIS-3.16%2B-green)
-![Version](https://img.shields.io/badge/version-v1.0-blue)
+![Version](https://img.shields.io/badge/version-v1.1-blue)
 ![Python](https://img.shields.io/badge/Python-3.x-blue)
 ![License](https://img.shields.io/badge/license-GPL--3.0-orange)
 
