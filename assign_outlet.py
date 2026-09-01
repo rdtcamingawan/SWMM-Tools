@@ -38,22 +38,28 @@ class AssignOutletMapTool(QgsMapTool):
         if self.sub_layer is None:
             bar.pushCritical("Assign Outlet", "Configure a subcatchment layer first!")
             return False
-        if junction is None or outfall is None:
+        if junction is None and outfall is None:
             bar.pushCritical("Assign Outlet", "Configure a node layer first!")
+            return False
+
+        # Should one of the input nodes is missing
+        self.node_layers = [lyr for lyr in (junction, outfall) if lyr is not None]
+
+        if not self.node_layers:
+            bar.pushCritical("Assign Outlet", "Configure a junction or outfall layer first.")
             return False
         if self.sub_layer.fields().indexOf(OUTLET_FIELD) == -1:
             bar.pushCritical("Assign Outlet", "Subcatchment layer needs a text field named Outlet.")
             return False
 
-        for lyr in (junction, outfall):
+        for lyr in self.node_layers:
             if lyr.fields().indexOf(NODE_ID_FIELD) == -1:
                 bar.pushCritical(
                     "Assign Outlet",
-                    f"Layer: '{lyr.name()}' needs a field named Name",
-                    )
+                    f"Layer '{lyr.name()}' needs a field named Name.",
+                )
                 return False
 
-        self.node_layers = [junction, outfall]
         return True
 
     def activate(self):
