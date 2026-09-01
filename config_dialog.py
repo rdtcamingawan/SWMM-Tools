@@ -30,7 +30,7 @@ class ConfigDialog(QDialog):
         self.cmb_sub = QgsMapLayerComboBox()
         self.cmb_sub.setFilters(QgsMapLayerProxyModel.PolygonLayer)
         self.cmb_sub.setAllowEmptyLayer(True)
-        form.addRow("Subcathment: ", self.cmb_sub)
+        form.addRow("Subcatchment: ", self.cmb_sub)
 
         # --- Junctions (Point) ---
         self.cmb_junction = QgsMapLayerComboBox()

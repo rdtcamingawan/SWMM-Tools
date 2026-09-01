@@ -10,5 +10,5 @@ homepage=https://github.com/rdtcamingawan/SWMM-Tools
 tracker=https://github.com/rdtcamingawan/SWMM-Tools/issues
 repository=https://github.com/rdtcamingawan/SWMM-Tools
 license=GPL-3.0-or-later
-experimental=True
+experimental=False
 tags=swmm,drainage,hydrology,vector,outlets

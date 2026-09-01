@@ -30,11 +30,10 @@ class AssignOutletMapTool(QgsMapTool):
         self.rubber.reset(QgsWkbTypes.PolygonGeometry)
 
     def load_layers(self):
+        bar = self.plugin.iface.messageBar()
         self.sub_layer = load_layer("subcatchment_layer_id", "subcatchment_layer")
         junction = load_layer("junction_layer_id", "junction_layer")
         outfall = load_layer("outfall_layer_id", "outfall_layer")
-
-        bar = self.plugin.iface.messageBar()
 
         if self.sub_layer is None:
             bar.pushCritical("Assign Outlet", "Configure a subcatchment layer first!")
@@ -101,6 +100,7 @@ class AssignOutletMapTool(QgsMapTool):
                 break
         if found is None:
             bar.pushWarning("Assign Outlet", "No subcatchment selected!")
+            return
 
         self.selected_sub_fid = found.id()
         self.rubber.setToGeometry(found.geometry(), self.sub_layer)
@@ -124,6 +124,7 @@ class AssignOutletMapTool(QgsMapTool):
         if nearest is None or min_dist > tolerance:
             bar.pushWarning("Assign Outlet", 
                             "No close nodes. Click near a node.")
+            return
 
         node_id = nearest[NODE_ID_FIELD]
         if node_id is None or str(node_id).strip() == "":

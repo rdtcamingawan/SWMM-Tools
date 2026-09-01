@@ -47,7 +47,7 @@ class SWMMTools:
             self.outlet_tool.reset()
             
     def unload(self):
-        # Remove the menu item when pllugin is disabled
+        # Remove the menu item when plugin is disabled
         if self.action_config:
             self.iface.removePluginMenu("&SWMM Tools", self.action_config)
             self.iface.removeToolBarIcon(self.action_config)
