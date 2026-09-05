@@ -45,6 +45,13 @@ SWMM Tools stores which layers are your subcatchments, junctions and outfalls, t
 
 Those field names are fixed in this version. Use a projected CRS. Node snap is 50 map units.
 
+## Demo Video
+
+
+https://github.com/user-attachments/assets/b1e193fb-f9b2-48a6-8a1c-6b36ae08a3c8
+
+
+
 ## Repository structure
 
 ```text
@@ -59,7 +66,4 @@ SWMM-Tools/
 ├── README.md
 ├── LICENSE
 └── .gitignore
-
-## Demo Video
-https://github.com/user-attachments/assets/fdf1adbf-da7d-4d6e-9af5-cc5876ee6d22
 
