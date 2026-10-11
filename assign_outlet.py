@@ -1,7 +1,11 @@
+# Author: Richmond Dave T. Camingawan
+# GitHub: https://github.com/rdtcamingawan/SWMM-Tools
+# License: GNU General Public License v3.0
+
 from qgis.PyQt.QtCore import Qt
 from qgis.PyQt.QtGui import QColor
 from qgis.core import (QgsWkbTypes, QgsGeometry, QgsFeatureRequest)
-from qgis.gui import QgsMapTool, QgsRubberBand
+from qgis.gui import QgsMapTool, QgsRubberBand, QgsMapToolIdentify
 
 from .config import load_layer
 
@@ -18,6 +22,8 @@ class AssignOutletMapTool(QgsMapTool):
         self.sub_layer = None
         self.node_layers = []
         self.selected_sub_fid = None
+
+        self.identify_tool = QgsMapToolIdentify(self.canvas)
 
         self.rubber = QgsRubberBand(self.canvas, QgsWkbTypes.PolygonGeometry)
         self.rubber.setColor(QColor(0, 120, 255, 80))
@@ -38,25 +44,28 @@ class AssignOutletMapTool(QgsMapTool):
         if self.sub_layer is None:
             bar.pushCritical("Assign Outlet", "Configure a subcatchment layer first!")
             return False
-        if junction is None and outfall is None:
+
+        # Should one of the input nodes is missing
+        self.node_layers = [layer for layer in (junction, outfall) if layer is not None]
+        
+        if not self.node_layers:
             bar.pushCritical("Assign Outlet", "Configure a node layer first!")
             return False
 
-        # Should one of the input nodes is missing
-        self.node_layers = [lyr for lyr in (junction, outfall) if lyr is not None]
-
-        if not self.node_layers:
-            bar.pushCritical("Assign Outlet", "Configure a junction or outfall layer first.")
-            return False
         if self.sub_layer.fields().indexOf(OUTLET_FIELD) == -1:
-            bar.pushCritical("Assign Outlet", "Subcatchment layer needs a text field named Outlet.")
+            bar.pushCritical(
+                "Assign Outlet",
+                f"Layer '{self.sub_layer.name()}' needs a field named "
+                f"'{OUTLET_FIELD}'"
+                )
             return False
 
-        for lyr in self.node_layers:
-            if lyr.fields().indexOf(NODE_ID_FIELD) == -1:
+        for layer in self.node_layers:
+            if layer.fields().indexOf(NODE_ID_FIELD) == -1:
                 bar.pushCritical(
                     "Assign Outlet",
-                    f"Layer '{lyr.name()}' needs a field named Name.",
+                    f"Layer '{layer.name()}' needs a field named "
+                    f"'{NODE_ID_FIELD}'"
                 )
                 return False
 
@@ -65,101 +74,127 @@ class AssignOutletMapTool(QgsMapTool):
     def activate(self):
         super().activate()
         self.reset()
+
         if not self.load_layers():
-            self.plugin.action_outlet.setChecked(False)
+            if self.plugin.action_outlet:
+                self.plugin.action_outlet.setChecked(False)
             self.canvas.unsetMapTool(self)
+
+    def deactivate(self):
+        self.reset()
+
+        if self.plugin.action_outlet:
+                self.plugin.action_outlet.blockSignals(True)
+                self.plugin.action_outlet.setChecked(False)
+                self.plugin.action_outlet.blockSignals(False)
+        super().deactivate()
+    
 
     def canvasReleaseEvent(self, event):
         if event.button() == Qt.RightButton:
             self.reset()
         if event.button()  != Qt.LeftButton:
             return
-
-        click_point = self.toMapCoordinates(event.pos())
-        click_geom = QgsGeometry.fromPointXY(click_point)
-
         if self.selected_sub_fid is None:
-            self._pick_subcatchment(click_point, click_geom)
+            self._pick_subcatchment(event)
         else:
-            self._pick_node(click_geom)
+            self._pick_node(event)
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.reset()
 
-    def deactivate(self):
-        self.reset()
-        if self.plugin.action_outlet:
-                self.plugin.action_outlet.blockSignals(True)
-                self.plugin.action_outlet.setChecked(False)
-                self.plugin.action_outlet.blockSignals(False)
-        super().deactivate()
+    def _identify(self, event, layers):
+        results = self.identify_tool.identify(
+            event.x(),
+            event.y(),
+            layerList=layers,
+        )
+        return results[0] if results else None
 
-    def _pick_subcatchment(self, click_point, click_geom):
+    def _pick_subcatchment(self, event):
         bar = self.plugin.iface.messageBar()
-        request = QgsFeatureRequest().setFilterRect(click_geom.boundingBox())
-        found = None
-        for feat in self.sub_layer.getFeatures(request):
-            geom = feat.geometry()
-            if geom.contains(click_point) or geom.intersects(click_geom):
-                found = feat
-                break
-        if found is None:
-            bar.pushWarning("Assign Outlet", "No subcatchment selected!")
+        result = self.identify_tool(event, [self.sub_layer])
+
+        if result is None:
+            bar.pushWarning("Assign Outlet: ",
+                            "No Subcatchment selected.")
             return
 
-        self.selected_sub_fid = found.id()
-        self.rubber.setToGeometry(found.geometry(), self.sub_layer)
-        bar.pushInfo("Assign Outlet", "Subcatchment selected. Click on a node to assign outlet.")
+        feature = result.mFeature
+        self.selected_sub_fid = feature.id()
+        self.rubber.setToGeometry(feature.geometry(), self.sub_layer)
 
-    def _pick_node(self, click_geom):
+        bar.pushInfo("Assign Outlet: ",
+                     "Subcatchment selected. Click a junction or outfall.")
+        
+    def _pick_node(self, event):
         bar = self.plugin.iface.messageBar()
-        nearest = None
-        nearest_layer = None
-        min_dist = float("inf")
-        tolerance = 50.0
+        result = self._identify(event, self.node_layers)
 
-        for lyr in self.node_layers:
-            for feat in lyr.getFeatures():
-                dist = feat.geometry().distance(click_geom)
-                if dist < min_dist:
-                    min_dist = dist
-                    nearest = feat
-                    nearest_layer = lyr
-
-        if nearest is None or min_dist > tolerance:
-            bar.pushWarning("Assign Outlet", 
-                            "No close nodes. Click near a node.")
+        if result is None:
+            bar.pushWarning(
+                "Assign Outlet",
+                "No junction or outfall selected.",
+            )
             return
 
-        node_id = nearest[NODE_ID_FIELD]
+        feature = result.mFeature
+        node_layer = result.mLayer
+        node_id = feature[NODE_ID_FIELD]
+
         if node_id is None or str(node_id).strip() == "":
-            bar.pushWarning("Assign Outlet",
-                            "Node has an empty Name field")
+            bar.pushWarning(
+                "Assign Outlet",
+                f"Selected feature has an empty '{NODE_ID_FIELD}' field.",
+            )
             return
-        self._write_outlet(str(node_id), nearest_layer)
+
+        self._write_outlet(str(node_id), node_layer)
 
     def _write_outlet(self, node_id, node_layer):
         bar = self.plugin.iface.messageBar()
         field_idx = self.sub_layer.fields().indexOf(OUTLET_FIELD)
-
+        
+        started_editing = False
         if not self.sub_layer.isEditable():
-            self.sub_layer.startEditing()
+            started_editing = self.sub_layer.startEditing()
+            if not started_editing:
+                bar.pushCritical(
+                    "Assign Outlet",
+                    f"Could not start editing '{self.sub_layer.name()}'.",
+                )
+                return
 
         ok = self.sub_layer.changeAttributeValue(
-            self.selected_sub_fid, field_idx, node_id
+            self.selected_sub_fid,
+            field_idx,
+            node_id,
         )
 
-        if ok:
-            self.sub_layer.commitChanges()
-            self.sub_layer.triggerRepaint()
-            bar.pushSuccess("Assign Outlet",
-                            f"Outlet -> {node_id} ({node_layer.name()})")
-        else:
-            self.sub_layer.rollBack()
-            bar.pushCritical("Assign Outlet",
-                             "Could not write outlet node.")
+        if not ok:
+            if started_editing:
+                self.sub_layer.rollBack()
+            bar.pushCritical(
+                "Assign Outlet",
+                "Could not write outlet node.",
+            )
+            return
+        
+        if started_editing:
+            if not self.sub_layer.commitChanges():
+                errors = "; ".join(self.sub_layer.commitErrors())
+                bar.pushCritical(
+                    "Assign Outlet",
+                    f"Could not save outlet assignment. {errors}",
+                )
+                return
 
+        self.sub_layer.triggerRepaint()
+        bar.pushSuccess(
+            "Assign Outlet",
+            f"Outlet -> {node_id} ({node_layer.name()})",
+        )
         self.reset()
 
 
