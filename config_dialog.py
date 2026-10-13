@@ -1,8 +1,9 @@
 from qgis.PyQt.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, 
-                                 QDialogButtonBox, QLabel
+                                 QDialogButtonBox, QLabel, QToolButton,
+                                 QWidget
                                  )
 from qgis.PyQt.QtCore import Qt
-from qgis.gui import QgsMapLayerComboBox
+from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
 from qgis.core import QgsMapLayerProxyModel
 
 from .config import load_layer
@@ -47,6 +48,51 @@ class ConfigDialog(QDialog):
         # Add all the combo boxes to the main layout
         layout.addLayout(form)
 
+        # Assign outlet fields
+        self.btn_assign_outlet_fields = QToolButton()
+        self.btn_assign_outlet_fields.setText("Assign Outlet Fields")
+        self.btn_assign_outlet_fields.setCheckable(True)
+        self.btn_assign_outlet_fields.setChecked(False)
+        self.btn_assign_outlet_fields.setArrowType(Qt.RightArrow)
+        self.btn_assign_outlet_fields.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+
+        layout.addWidget(self.btn_assign_outlet_fields)
+
+        self.assign_outlet_fields_widget = QWidget()
+        fields_form = QFormLayout(self.assign_outlet_fields_widget)
+        fields_form.setLabelAlignment(Qt.AlignRight)
+
+        # Subcatchment Outlet Field
+        self.cmb_outlet_field = QgsFieldComboBox()
+        fields_form.addRow("Outlet Field: ", self.cmb_outlet_field)
+
+        # Junction node ID field
+        self.cmb_junction_id_field = QgsFieldComboBox()
+        fields_form.addRow("Junction ID field:", self.cmb_junction_id_field)
+
+        # Outfall node ID field
+        self.cmb_outfall_id_field = QgsFieldComboBox()
+        fields_form.addRow("Outfall ID field:", self.cmb_outfall_id_field)
+
+        self.assign_outlet_fields_widget.setVisible(False)
+        layout.addWidget(self.assign_outlet_fields_widget)
+
+        # Connect selected layers to their field selectors
+        self.cmb_sub.layerChanged.connect(
+            self.cmb_outlet_field.setLayer
+        )
+        self.cmb_junction.layerChanged.connect(
+            self.cmb_junction_id_field.setLayer
+        )
+        self.cmb_outfall.layerChanged.connect(
+            self.cmb_outfall_id_field.setLayer
+        )
+
+        # Expand / collapse
+        self.btn_assign_outlet_fields.toggled.connect(
+            self._toggle_assign_outlet_fields
+        )
+
         #OK/Cancel buttons
         buttons = QDialogButtonBox(
             QDialogButtonBox.Ok | QDialogButtonBox.Cancel
@@ -60,13 +106,26 @@ class ConfigDialog(QDialog):
         self.cmb_junction.setLayer(load_layer("junction_layer_id", "junction_layer"))
         self.cmb_outfall.setLayer(load_layer("outfall_layer_id", "outfall_layer"))
 
-
+    def _toggle_assign_outlet_fields(self, checked):
+        self.assign_outlet_fields_widget.setVisible(checked)
+        self.btn_assign_outlet_fields.setArrowType(
+            Qt.DownArrow if checked else Qt.RightArrow
+        )
+    
     def get_selected_layers(self):
         """Returns the layer the user chooses"""
         return {
             "subcatchment": self.cmb_sub.currentLayer(),
             "junction": self.cmb_junction.currentLayer(),
             "outfall": self.cmb_outfall.currentLayer()
+        }
+
+    def get_assign_outlet_fields(self):
+        """Return the fields used by the Assign Outlet tool."""
+        return {
+            "outlet_field": self.cmb_outlet_field.currentField(),
+            "junction_id_field": self.cmb_junction_id_field.currentField(),
+            "outfall_id_field": self.cmb_outfall_id_field.currentField(),
         }
 
 
