@@ -7,10 +7,7 @@ from qgis.PyQt.QtGui import QColor
 from qgis.core import (QgsWkbTypes, QgsGeometry, QgsFeatureRequest)
 from qgis.gui import QgsMapTool, QgsRubberBand, QgsMapToolIdentify
 
-from .config import load_layer
-
-OUTLET_FIELD = "Outlet"
-NODE_ID_FIELD = "Name"
+from .config import load_layer, load_outlet_fields
 
 class AssignOutletMapTool(QgsMapTool):
     def __init__(self, canvas, plugin):
@@ -20,8 +17,14 @@ class AssignOutletMapTool(QgsMapTool):
         self.setCursor(Qt.CrossCursor)
 
         self.sub_layer = None
+        self.junction_layer = None
+        self.outfall_layer = None
         self.node_layers = []
         self.selected_sub_fid = None
+
+        self.outlet_field = None
+        self.junction_id_field = None
+        self.outfall_id_field = None
 
         self.identify_tool = QgsMapToolIdentify(self.canvas)
 
@@ -37,35 +40,48 @@ class AssignOutletMapTool(QgsMapTool):
 
     def load_layers(self):
         bar = self.plugin.iface.messageBar()
+
+        fields = load_outlet_fields()
+        self.outlet_field = fields["outlet_field"] or "Outlet"
+        self.junction_id_field = fields["junction_id_field"] or "Name"
+        self.outfall_id_field = fields["outfall_id_field"] or "Name"
+
         self.sub_layer = load_layer("subcatchment_layer_id", "subcatchment_layer")
-        junction = load_layer("junction_layer_id", "junction_layer")
-        outfall = load_layer("outfall_layer_id", "outfall_layer")
+        self.junction_layer = load_layer("junction_layer_id", "junction_layer")
+        self.outfall_layer = load_layer("outfall_layer_id", "outfall_layer")
 
         if self.sub_layer is None:
             bar.pushCritical("Assign Outlet", "Configure a subcatchment layer first!")
             return False
 
         # Should one of the input nodes is missing
-        self.node_layers = [layer for layer in (junction, outfall) if layer is not None]
+        self.node_layers = [layer for layer in (self.junction_layer, self.outfall_layer) if layer is not None]
         
         if not self.node_layers:
             bar.pushCritical("Assign Outlet", "Configure a node layer first!")
             return False
 
-        if self.sub_layer.fields().indexOf(OUTLET_FIELD) == -1:
+        if self.sub_layer.fields().indexOf(self.outlet_field) == -1:
             bar.pushCritical(
                 "Assign Outlet",
                 f"Layer '{self.sub_layer.name()}' needs a field named "
-                f"'{OUTLET_FIELD}'"
+                f"'{self.outlet_field}'"
                 )
             return False
 
-        for layer in self.node_layers:
-            if layer.fields().indexOf(NODE_ID_FIELD) == -1:
+        if self.junction_layer:
+            if self.junction_layer.fields().indexOf(self.junction_id_field) == -1:
                 bar.pushCritical(
                     "Assign Outlet",
-                    f"Layer '{layer.name()}' needs a field named "
-                    f"'{NODE_ID_FIELD}'"
+                    f"Junction layer needs the field '{self.junction_id_field}'",
+                )
+                return False
+        
+        if self.outfall_layer:
+            if self.outfall_layer.fields().indexOf(self.outfall_id_field) == -1:
+                bar.pushCritical(
+                    "Assign Outlet",
+                    f"Outfall layer needs the field '{self.outfall_id_field}'",
                 )
                 return False
 
@@ -141,12 +157,24 @@ class AssignOutletMapTool(QgsMapTool):
 
         feature = result.mFeature
         node_layer = result.mLayer
-        node_id = feature[NODE_ID_FIELD]
+
+        if node_layer == self.junction_layer:
+            id_field = self.junction_id_field
+        elif node_layer == self.outfall_layer:
+            id_field = self.outfall_id_field
+        else:
+            id_field = None
+
+        if not id_field:
+            bar.pushWarning("Assign Outlet", "No ID field configured for this node layer.")
+            return
+
+        node_id = feature[id_field]
 
         if node_id is None or str(node_id).strip() == "":
             bar.pushWarning(
                 "Assign Outlet",
-                f"Selected feature has an empty '{NODE_ID_FIELD}' field.",
+                f"Selected feature has an empty '{id_field}' field.",
             )
             return
 
@@ -154,7 +182,7 @@ class AssignOutletMapTool(QgsMapTool):
 
     def _write_outlet(self, node_id, node_layer):
         bar = self.plugin.iface.messageBar()
-        field_idx = self.sub_layer.fields().indexOf(OUTLET_FIELD)
+        field_idx = self.sub_layer.fields().indexOf(self.outlet_field)
         
         started_editing = False
         if not self.sub_layer.isEditable():
