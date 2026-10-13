@@ -4,6 +4,7 @@ import os.path
 
 from .config_dialog import ConfigDialog
 from .assign_outlet import AssignOutletMapTool
+from .helper_functions.calculate_width import CalculateWidth
 
 class SWMMTools:
     def __init__(self, iface):
@@ -13,6 +14,7 @@ class SWMMTools:
         self.canvas = self.iface.mapCanvas()
         self.action_outlet = None
         self.outlet_tool = None
+        self.action_width = None
 
     def initGui(self):
         icon_path = os.path.join(self.plugin_dir, "icon.png")
@@ -38,6 +40,13 @@ class SWMMTools:
         self.iface.addToolBarIcon(self.action_outlet)
         self.outlet_tool = AssignOutletMapTool(self.canvas, self)
 
+        # Calculate Width
+        self.action_width = QAction("Calculate Width", self.iface.mainWindow())
+        self.action_width.setToolTip("Calculate subcatchment width from longest flowpath")
+        self.action_width.triggered.connect(self.run_calculate_width)
+        self.iface.addPluginToMenu("&SWMM Tools", self.action_width)
+        self.iface.addToolBarIcon(self.action_width)
+
     def toggle_outlet_tool(self, checked):
         if checked:
             self.canvas.setMapTool(self.outlet_tool)
@@ -57,6 +66,10 @@ class SWMMTools:
             self.iface.removeToolBarIcon(self.action_outlet)
         if self.canvas.mapTool() == self.outlet_tool:
             self.canvas.unsetMapTool(self.outlet_tool)
+       
+        if self.action_width:
+            self.iface.removePluginMenu("&SWMM Tools", self.action_width)
+            self.iface.removeToolBarIcon(self.action_width)
             
     def run_config(self):
         
@@ -70,16 +83,13 @@ class SWMMTools:
         layers = dialog.get_selected_layers()
         fields = dialog.get_assign_outlet_fields()
 
-
-        layers = dialog.get_selected_layers()
-        print("Layers from dialog:", {k: (v.name() if v else None) for k, v in layers.items()})
-        
         # Save the layers
         from .config import save_layers, save_outlet_fields
         save_layers(
             subcatchment=layers["subcatchment"],
             junction=layers["junction"],
-            outfall=layers["outfall"]
+            outfall=layers["outfall"],
+            longest_flowpath=layers["longest_flowpath"],
         )
 
         save_outlet_fields(
@@ -92,13 +102,14 @@ class SWMMTools:
         subcatchment = layers["subcatchment"]
         junction = layers["junction"]
         outfall = layers["outfall"]
+        flowpath = layers["longest_flowpath"]
 
         # sample result
         msg = []
         msg.append(f"Subcatchment: {subcatchment.name() if subcatchment else None}")
         msg.append(f"Junction: {junction.name() if junction else None}")
         msg.append(f"Outfall: {outfall.name() if outfall else None}")
-
+        msg.append(f"Longest Flowpath: {flowpath.name() if flowpath else None}")
 
         self.iface.messageBar().pushSuccess(
             "SWMM Tools",
@@ -109,3 +120,7 @@ class SWMMTools:
             "SWMM Tools",
             "Layer configuration saved for this project."
         )
+
+    def run_calculate_width(self):
+        tool = CalculateWidth(self.iface)
+        tool.calculate_width()
