@@ -11,23 +11,23 @@ SWMM Tools stores which layers are your subcatchments, junctions and outfalls, t
 
 ## Main features
 
-- Configure Layers: pick the subcatchment, junction and outfall layers once
-- Layer choice saved in the QGIS project (layer id, then layer name)
+- Configure Layers: pick subcatchment, junction, outfall, and longest flowpath layers
+- Layer and field choices saved in the QGIS project
+- Configurable outlet field and node ID fields (defaults: `Outlet` and `Name`)
 - Assign Outlet map tool: click a subcatchment, then a node
-- Writes `Name` from the node into `Outlet` on the subcatchment
-- Works with junction and outfall point layers
+- Writes the node ID into the subcatchment outlet field
+- Calculate Width: clips longest-flowpath lines to each subcatchment and writes `Width = Area / Longest Flowpath`
 - Highlight of the selected subcatchment while you pick a node
 - Esc or right-click cancels the current subcatchment
 
 ## Typical workflow
 
-1. Load your SWMM polygon and point layers in QGIS.
-2. Confirm subcatchments have a text field `Outlet`.
-3. Confirm junctions and outfalls have a field `Name`.
-4. Open **Configure Layers** and select the three layers.
-5. Turn on **Assign Outlet**.
-6. Click a subcatchment, then click a junction or outfall.
-7. Continue around the model. Generate the `.inp` with the Generate SWMM inp plugin when all layers are set.
+1. Load your SWMM polygon, point, and line layers in QGIS.
+2. Open **Configure Layers** and select the layers (and optionally the outlet/ID fields).
+3. Turn on **Assign Outlet**.
+4. Click a subcatchment, then click a junction or outfall.
+5. Run **Calculate Width** if you have a longest flowpath layer.
+6. Generate the `.inp` with the Generate SWMM Inp plugin when ready.
 
 ## Installation from ZIP (outside of QGIS Plugin Repository)
 
@@ -40,10 +40,10 @@ SWMM Tools stores which layers are your subcatchments, junctions and outfalls, t
 ## Requirements
 
 - QGIS 3.16 or later (developed on QGIS 3.44 LTR)
-- Polygon subcatchments with field `Outlet`
-- Point junctions and point outfalls with field `Name`
-
-Those field names are fixed in this version. Use a projected CRS. Node snap is 50 map units.
+- Polygon subcatchments
+- Point junctions and/or outfalls
+- Optional line layer for longest flowpath
+- Default field names: `Outlet`, `Name`, `Width` (configurable for outlet and ID fields)
 
 ## Demo Video
 
@@ -61,6 +61,9 @@ SWMM-Tools/
 ├── config.py
 ├── config_dialog.py
 ├── assign_outlet.py
+├── helper_functions/
+│   ├── __init__.py
+│   └── calculate_width.py
 ├── icon.png
 ├── metadata.txt
 ├── README.md
