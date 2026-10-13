@@ -6,7 +6,7 @@ from qgis.PyQt.QtCore import Qt
 from qgis.gui import QgsMapLayerComboBox, QgsFieldComboBox
 from qgis.core import QgsMapLayerProxyModel
 
-from .config import load_layer
+from .config import load_layer, load_outlet_fields
 
 class ConfigDialog(QDialog):
     def __init__(self, parent=None):
@@ -105,6 +105,21 @@ class ConfigDialog(QDialog):
         self.cmb_sub.setLayer(load_layer("subcatchment_layer_id", "subcatchment_layer"))
         self.cmb_junction.setLayer(load_layer("junction_layer_id", "junction_layer"))
         self.cmb_outfall.setLayer(load_layer("outfall_layer_id", "outfall_layer"))
+
+
+        # Pre-select previously selected outlet fields
+        fields = load_outlet_fields()
+        
+        self.cmb_outlet_field.setLayer(self.cmb_sub.currentLayer())
+        self.cmb_junction_id_field.setLayer(self.cmb_junction.currentLayer())
+        self.cmb_outfall_id_field.setLayer(self.cmb_outfall.currentLayer())
+        
+        if fields["outlet_field"]:
+            self.cmb_outlet_field.setField(fields["outlet_field"])
+        if fields["junction_id_field"]:
+            self.cmb_junction_id_field.setField(fields["junction_id_field"])
+        if fields["outfall_id_field"]:
+            self.cmb_outfall_id_field.setField(fields["outfall_id_field"])
 
     def _toggle_assign_outlet_fields(self, checked):
         self.assign_outlet_fields_widget.setVisible(checked)

@@ -39,3 +39,16 @@ def load_layer(id_key, name_key):
         if layers:
             return layers[0]
 
+def save_outlet_fields(outlet_field, junction_id_field, outfall_id_field):
+    proj = QgsProject.instance()
+    proj.writeEntry(_GROUP, "outlet_field", outlet_field or "")
+    proj.writeEntry(_GROUP, "junction_id_field", junction_id_field or "")
+    proj.writeEntry(_GROUP, "outfall_id_field", outfall_id_field or "")
+
+def load_outlet_fields():
+    proj = QgsProject.instance()
+    return {
+        "outlet_field": proj.readEntry(_GROUP, "outlet_field", "")[0],
+        "junction_id_field": proj.readEntry(_GROUP, "junction_id_field", "")[0],
+        "outfall_id_field": proj.readEntry(_GROUP, "outfall_id_field", "")[0],
+    }

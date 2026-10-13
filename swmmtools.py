@@ -68,14 +68,25 @@ class SWMMTools:
 
         # User clicked OK. Read layers
         layers = dialog.get_selected_layers()
+        fields = dialog.get_assign_outlet_fields()
 
+
+        layers = dialog.get_selected_layers()
+        print("Layers from dialog:", {k: (v.name() if v else None) for k, v in layers.items()})
+        
         # Save the layers
-        from .config import save_layers
+        from .config import save_layers, save_outlet_fields
         save_layers(
             subcatchment=layers["subcatchment"],
             junction=layers["junction"],
             outfall=layers["outfall"]
         )
+
+        save_outlet_fields(
+            outlet_field=fields["outlet_field"],
+            junction_id_field=fields["junction_id_field"],
+            outfall_id_field=fields["outfall_id_field"],
+        )   
 
         # Code block for push message (debugging)
         subcatchment = layers["subcatchment"]
