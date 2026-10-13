@@ -114,7 +114,7 @@ class AssignOutletMapTool(QgsMapTool):
 
     def _pick_subcatchment(self, event):
         bar = self.plugin.iface.messageBar()
-        result = self.identify_tool(event, [self.sub_layer])
+        result = self._identify(event, [self.sub_layer])
 
         if result is None:
             bar.pushWarning("Assign Outlet: ",
