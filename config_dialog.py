@@ -46,6 +46,12 @@ class ConfigDialog(QDialog):
         form.addRow("Outfall: ", self.cmb_outfall)
 
         # --- Longest Flowpath (Line) ---
+        self.cmb_conduit = QgsMapLayerComboBox()
+        self.cmb_conduit.setFilters(QgsMapLayerProxyModel.LineLayer)
+        self.cmb_conduit.setAllowEmptyLayer(True)
+        form.addRow("Conduit: ", self.cmb_conduit)
+        
+        # --- Longest Flowpath (Line) ---
         self.cmb_flowpath = QgsMapLayerComboBox()
         self.cmb_flowpath.setFilters(QgsMapLayerProxyModel.LineLayer)
         self.cmb_flowpath.setAllowEmptyLayer(True)
