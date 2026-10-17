@@ -1,69 +1,47 @@
-from qgis.core import QgsSpatialIndex
+from qgis.core import QgsProject, QgsSpatialIndex
 
+# Get map layers
 proj = QgsProject.instance()
-line_layer = proj.mapLayersByName("flowPath")[0]
+conduit_layer = proj.mapLayersByName("5_2_SWMM_conduits")[0]
 junction_layer = proj.mapLayersByName("5_2_SWMM_junctions")[0]
 
-# Initialize junction layer for QgsSpatialIndex-ing
+# Initialize junction layer as QgsSpatialIndex
 index = QgsSpatialIndex(junction_layer.getFeatures())
 
-def assign_node_name(vlayer,fid,field_idx, new_value):
-    vlayer.changeAttributeValue(
-        fid,
-        field_idx,
-        new_value,
-        # old_value,
-    )
-    return
-
-
-junction_field = line_layer.fields()
-# Index of FromNode
-idx_from_node = junction_field.indexOf("FromNode")
-# Index of ToNode
-idx_to_node = junction_field.indexOf("ToNode")
-
-line_layer.startEditing()
-# Loop for every feature of the conduit layed
-for feat in line_layer.getFeatures():
-    geom = feat.geometry().asPolyline()
-    start_point = geom[0]
-    end_point = geom[-1]
-
-    # Get FID then Name of nearest junction point
-    # at the START VERTEX
-    start_point_fid = index.nearestNeighbor(
-                            start_point,
-                            neighbors=1,)[0]
-    start_point_name = junction_layer.getFeature(start_point_fid)["Name"]
-    # Get FID then Name of nearest junction point
-    # at the END VERTEX
-    end_point_fid = index.nearestNeighbor(
-                            end_point,
-                            neighbors=1,)[0]
-    end_point_name = junction_layer.getFeature(end_point_fid)["Name"]
-
-
-    # --------- Update Attribute ---------------------
-    # Assign the name of the intersected junction point
-    # on the FromNode and ToNode of the conduit layer
+def get_elevation(index, point, junction_layer):
+    vertex_fid = index.nearestNeighbor(
+        point,
+        neighbors=1,)[0]
+    junction_feat = junction_layer.getFeature(vertex_fid)
+    junction_elevation = junction_feat["Elevation"]
+    return junction_elevation
     
-    # Get old value of FromNode
-    old_value = feat["FromNode"]
-    # Update FromNode
-    assign_node_name(line_layer, 
-                     feat.id(),
-                     idx_from_node,
-                     new_value=start_point_name,
-                        )
-    
-    # # Get old value of ToNode
-    old_value = feat["ToNode"]
-    # Update ToNode
-    assign_node_name(line_layer, 
-                     
-                        feat.id(),
-                        idx_to_node,
-                        new_value=end_point_name,
-                        )
-line_layer.commitChanges()
+
+
+for feat in conduit_layer.getFeatures():
+    geom = feat.geometry()
+    geom_poly = geom.asPolyline()
+    start_vertex = geom_poly[0]
+    end_vertex = geom_poly[-1]
+
+    # Get conduit end elevations
+    start_elevation = get_elevation(
+        index=index,
+        point=start_vertex,
+        junction_layer=junction_layer,)
+    end_elevation = get_elevation(
+        index=index,
+        point=end_vertex,
+        junction_layer=junction_layer,)
+
+    # Get conduit length
+    conduit_length = geom.length()
+
+    # Skip the current feature if length is 0
+    if conduit_length == 0:
+        continue
+    else:
+        # Finally, get conduit slope
+        # Slope = Δ elevation / length
+        conduit_slope = (abs(start_elevation - end_elevation)) / conduit_length
+        print(f"{feat["Name"]} Slope: {conduit_slope}, Length: {conduit_length}")
