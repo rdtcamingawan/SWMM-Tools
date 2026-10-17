@@ -16,32 +16,32 @@ def get_elevation(index, point, junction_layer):
     junction_elevation = junction_feat["Elevation"]
     return junction_elevation
     
+def get_conduit_slope(start_vertex, end_vertex, length, index):
+    start_elevation = get_elevation(index, start_vertex, junction_layer)
+    end_elevation = get_elevation(index, end_vertex, junction_layer)
 
+    # Slope = Δ elevation / length
+    conduit_slope = abs(start_elevation - end_elevation) / length
+    return conduit_slope
 
+# Loop to get codnuit slope for each feature
 for feat in conduit_layer.getFeatures():
     geom = feat.geometry()
+    conduit_length = geom.length()
+
+    # Skip zero-length conduits
+    if conduit_length == 0:
+        continue
+
     geom_poly = geom.asPolyline()
     start_vertex = geom_poly[0]
     end_vertex = geom_poly[-1]
 
-    # Get conduit end elevations
-    start_elevation = get_elevation(
+    slope = get_conduit_slope(
+        start_vertex=start_vertex,
+        end_vertex=end_vertex,
+        length=conduit_length,
         index=index,
-        point=start_vertex,
-        junction_layer=junction_layer,)
-    end_elevation = get_elevation(
-        index=index,
-        point=end_vertex,
-        junction_layer=junction_layer,)
+    )
 
-    # Get conduit length
-    conduit_length = geom.length()
-
-    # Skip the current feature if length is 0
-    if conduit_length == 0:
-        continue
-    else:
-        # Finally, get conduit slope
-        # Slope = Δ elevation / length
-        conduit_slope = (abs(start_elevation - end_elevation)) / conduit_length
-        print(f"{feat["Name"]} Slope: {conduit_slope}, Length: {conduit_length}")
+    print(feat.id(), slope)
