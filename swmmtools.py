@@ -54,6 +54,14 @@ class SWMMTools:
         self.action_assign_node.triggered.connect(self.run_assign_conduit_node)
         self.iface.addPluginToMenu("&SWMM Tools", self.action_assign_node)
 
+        # Initialize list of QActions
+        self.actions = [
+            self.action_config,
+            self.action_outlet,
+            self.action_width,
+            self.action_assign_node,
+        ]
+
     def toggle_outlet_tool(self, checked):
         if checked:
             self.canvas.setMapTool(self.outlet_tool)
@@ -63,23 +71,27 @@ class SWMMTools:
             self.outlet_tool.reset()
             
     def unload(self):
-        # Remove the menu item when plugin is disabled
-        if self.action_config:
-            self.iface.removePluginMenu("&SWMM Tools", self.action_config)
-            self.iface.removeToolBarIcon(self.action_config)
-
-        if self.action_outlet:
-            self.iface.removePluginMenu("&SWMM Tools", self.action_outlet)
-            self.iface.removeToolBarIcon(self.action_outlet)
+        # Unset map tool
         if self.canvas.mapTool() == self.outlet_tool:
             self.canvas.unsetMapTool(self.outlet_tool)
-       
-        if self.action_width:
-            self.iface.removePluginMenu("&SWMM Tools", self.action_width)
-            self.iface.removeToolBarIcon(self.action_width)
 
-        if self.action_assign_node:
-            self.iface.removePluginMenu("&SWMM Tools", self.action_assign_node)
+        # Remove everything
+        for action in self.actions:
+            if not action:
+                continue
+
+            # Menu
+            self.iface.removePluginMenu("&SWMM Tools", action)
+
+            # Toolbar
+            try:
+                self.iface.removeToolBarIcon(action)
+            except Exception:
+                try:
+                    # fallback
+                    pass
+                except Exception:
+                    continue
             
     def run_config(self):
         
@@ -138,3 +150,4 @@ class SWMMTools:
 
     def run_assign_conduit_node(self):
         assign_node()
+        
