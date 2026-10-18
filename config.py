@@ -6,6 +6,7 @@ def save_layers(
         subcatchment:None,
         junction:None,
         outfall:None,
+        conduit:None,
         longest_flowpath=None):
     # Initialize QgsProject
     proj = QgsProject.instance()
@@ -22,6 +23,7 @@ def save_layers(
     _write(junction, "junction_layer", "junction_layer_id")
     _write(outfall, "outfall_layer", "outfall_layer_id")
     _write(longest_flowpath, "longest_flowpath_layer", "longest_flowpath_layer_id")
+    _write(conduit, "conduit_layer", "conduit_layer_id")
 
 def load_layer(id_key, name_key):
     proj = QgsProject.instance()

@@ -5,6 +5,7 @@ import os.path
 from .config_dialog import ConfigDialog
 from .assign_outlet import AssignOutletMapTool
 from .helper_functions.calculate_width import CalculateWidth
+from .helper_functions.assign_conduit_node import assign_node
 
 class SWMMTools:
     def __init__(self, iface):
@@ -15,6 +16,7 @@ class SWMMTools:
         self.action_outlet = None
         self.outlet_tool = None
         self.action_width = None
+        self.action_assign_node = None
 
     def initGui(self):
         icon_path = os.path.join(self.plugin_dir, "icon.png")
@@ -47,6 +49,11 @@ class SWMMTools:
         self.iface.addPluginToMenu("&SWMM Tools", self.action_width)
         self.iface.addToolBarIcon(self.action_width)
 
+        # Assign Conduit Nodes
+        self.action_assign_node = QAction("Assign Conduit Node", self.iface.mainWindow())
+        self.action_assign_node.triggered.connect(self.run_assign_conduit_node)
+        self.iface.addPluginToMenu("&SWMM Tools", self.action_assign_node)
+
     def toggle_outlet_tool(self, checked):
         if checked:
             self.canvas.setMapTool(self.outlet_tool)
@@ -70,6 +77,9 @@ class SWMMTools:
         if self.action_width:
             self.iface.removePluginMenu("&SWMM Tools", self.action_width)
             self.iface.removeToolBarIcon(self.action_width)
+
+        if self.action_assign_node:
+            self.iface.removePluginMenu("&SWMM Tools", self.action_assign_node)
             
     def run_config(self):
         
@@ -89,6 +99,7 @@ class SWMMTools:
             subcatchment=layers["subcatchment"],
             junction=layers["junction"],
             outfall=layers["outfall"],
+            conduit=layers["conduit"],
             longest_flowpath=layers["longest_flowpath"],
         )
 
@@ -124,3 +135,6 @@ class SWMMTools:
     def run_calculate_width(self):
         tool = CalculateWidth(self.iface)
         tool.calculate_width()
+
+    def run_assign_conduit_node(self):
+        assign_node()

@@ -117,6 +117,7 @@ class ConfigDialog(QDialog):
         self.cmb_sub.setLayer(load_layer("subcatchment_layer_id", "subcatchment_layer"))
         self.cmb_junction.setLayer(load_layer("junction_layer_id", "junction_layer"))
         self.cmb_outfall.setLayer(load_layer("outfall_layer_id", "outfall_layer"))
+        self.cmb_conduit.setLayer(load_layer("conduit_layer_id", "conduit_layer"))
         self.cmb_flowpath.setLayer(load_layer("longest_flowpath_layer_id", "longest_flowpath_layer"))
 
 
@@ -146,6 +147,7 @@ class ConfigDialog(QDialog):
             "subcatchment": self.cmb_sub.currentLayer(),
             "junction": self.cmb_junction.currentLayer(),
             "outfall": self.cmb_outfall.currentLayer(),
+            "conduit": self.cmb_conduit.currentLayer(),
             "longest_flowpath": self.cmb_flowpath.currentLayer(),
         }
 
