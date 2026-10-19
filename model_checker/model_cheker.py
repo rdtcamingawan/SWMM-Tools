@@ -80,4 +80,17 @@ def bad_conduit(conduit_layer, node_layer):
         if conduit["Length"] <= 0:
             print(f"Bad conduit length at {conduit['Name']}")
 
-bad_conduit(conduit_layer, [junction_layer])
+# bad_conduit(conduit_layer, [junction_layer])
+
+# ========== ERROR 112: INVALiD CONDUIT ROUGHNESS ========== 
+def invalid_roughness(conduit_layer):
+    for conduit in conduit_layer.getFeatures():
+        # Check if ROUGHNESS is NULL
+        if not conduit["Roughness"]:
+            print(f"No roughness value assigned at {conduit['Name']}")
+        # Check if ROUGHNESS <= 0
+        if conduit["Roughness"] <= 0:
+            print(f"Invalid roughness value at conduit: {conduit['Name']}")
+
+# invalid_roughness(conduit_layer)
+
