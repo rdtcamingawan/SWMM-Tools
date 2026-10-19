@@ -30,6 +30,7 @@ def check_ambiguous_sub_outlet(sub_names, node_names, sub_layer):
 # sub_names = collect_sub_names(sub_layer)
 # intersection = check_ambiguous_sub_outlet(sub_names, node_names, sub_layer)
 
+# ========== Error 209: Check Missing Subcatchment Outlet ==========
 def missing_outlet(sub_layer, node_layers):
     sub_names = collect_sub_names(sub_layer)
     node_names = collect_node_names([node_layers])
@@ -43,4 +44,16 @@ def missing_outlet(sub_layer, node_layers):
         elif not sub["Outlet"] in set_names:
             print(f"Error 208: {sub['Name']} has invalid outlet! Outlet does not exist in any node/subcatchment layers! {set_names}")
 
-missing_outlet(sub_layer, junction_layer)
+# missing_outlet(sub_layer, junction_layer)
+
+# ========== CHECK FOR NULL WIDTH/SLOPE ==========
+def missing_width_slope(sub_layer):
+    for sub in sub_layer.getFeatures():
+        # Check for missing Width
+        if not sub["Width"]:
+            print(f"Missing Width on {sub["Name"]}")
+
+        if not sub["Slope"]:
+            print(f"Missing Slope on {sub["Name"]}")
+
+missing_width_slope(sub_layer)
