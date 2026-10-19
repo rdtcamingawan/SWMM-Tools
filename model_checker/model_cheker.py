@@ -4,6 +4,7 @@ proj = QgsProject.instance()
 
 junction_layer = proj.mapLayersByName("5_2_SWMM_junctions")[0]
 sub_layer = proj.mapLayersByName("5_2_SWMM_subcatchments")[0]
+conduit_layer = proj.mapLayersByName("5_2_SWMM_conduits")[0]
 
 def collect_node_names(node_layer_list):
     for layer in node_layer_list:
@@ -56,4 +57,27 @@ def missing_width_slope(sub_layer):
         if not sub["Slope"]:
             print(f"Missing Slope on {sub["Name"]}")
 
-missing_width_slope(sub_layer)
+# missing_width_slope(sub_layer)
+
+# ========== ERROR 111: BAD CONDUIT ========== 
+# Check conduit for missing From/To Node value
+# Check for From == To Node
+# Check if Length <= 0
+
+def bad_conduit(conduit_layer, node_layer):
+    node_names = set(collect_node_names(node_layer))
+    for conduit in conduit_layer.getFeatures():
+        # Check missing FromNode
+        if not conduit["FromNode"]:
+            print(f"Missing FromNode of conduit: {conduit["Name"]}")
+        # Check missing ToNode
+        if not conduit["ToNode"]:
+            print(f"Missing ToNode of conduit: {conduit["Name"]}")
+        # Check if FromNode == ToNode
+        if conduit["FromNode"] == conduit["ToNode"]:
+            print(f"Bad conduit at {conduit['Name']}")
+        # Check if Length <= 0
+        if conduit["Length"] <= 0:
+            print(f"Bad conduit length at {conduit['Name']}")
+
+bad_conduit(conduit_layer, [junction_layer])
