@@ -149,5 +149,8 @@ class SWMMTools:
         tool.calculate_width()
 
     def run_assign_conduit_node(self):
+        bar = self.iface.messageBar()
         assign_node()
+        bar.pushSuccess("Assign Conduit: ", "Success!")
+
         

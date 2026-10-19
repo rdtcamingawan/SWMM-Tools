@@ -13,6 +13,7 @@ def collect_node_names(node_layer_list):
 def collect_sub_names(sub_layer):
     return [f["Name"] for f in sub_layer.getFeatures()]
 
+# ========== ERROR 108: AMBIGUOUS SUBCATCHMENT'S OUTLET ==========
 def check_ambiguous_sub_outlet(sub_names, node_names, sub_layer):
     set_node_names = set(node_names)
     set_sub_names = set(sub_names)
@@ -25,6 +26,21 @@ def check_ambiguous_sub_outlet(sub_names, node_names, sub_layer):
             print(f"Error 108 @ {sub["Name"]}")
     return
 
-node_names = collect_node_names([junction_layer])
-sub_names = collect_sub_names(sub_layer)
-intersection = check_ambiguous_sub_outlet(sub_names, node_names, sub_layer)
+# node_names = collect_node_names([junction_layer])
+# sub_names = collect_sub_names(sub_layer)
+# intersection = check_ambiguous_sub_outlet(sub_names, node_names, sub_layer)
+
+def missing_outlet(sub_layer, node_layers):
+    sub_names = collect_sub_names(sub_layer)
+    node_names = collect_node_names([node_layers])
+    set_names = set(sub_names).union(set(node_names))
+    for sub in sub_layer.getFeatures():
+        # Check for missing value
+        if not sub["Outlet"]:
+            print(f"Error 208: {sub['Name']} has missing outlet!")
+
+        # Check if input exist in any junction/subcatchment layer value
+        elif not sub["Outlet"] in set_names:
+            print(f"Error 208: {sub['Name']} has invalid outlet! Outlet does not exist in any node/subcatchment layers! {set_names}")
+
+missing_outlet(sub_layer, junction_layer)
