@@ -49,4 +49,4 @@ def conduit_slope():
             index=index,
         )
 
-        print(feat.id(), slope)
+        return slope

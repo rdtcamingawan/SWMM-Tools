@@ -94,3 +94,16 @@ def invalid_roughness(conduit_layer):
 
 # invalid_roughness(conduit_layer)
 
+# ========== ERROR: LOW CONDUIT SLOPE ========== 
+# Check whether a conduit is below the 
+# user-input required slope
+slope_req = 0.005
+
+from ..helper_functions.conduit_slope import 
+
+def check_slope(conduit_layer):
+    # TODO REFACTOR CONDUIT SLOPE
+    # HOW TO GET SLOPE PER FEATURE WITHOUT THE FOR LOOP
+    pass
+
+# 
